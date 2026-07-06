@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Nutritionist — Smart Food Advisor</title>
+    <meta name="description" content="AI-powered nutritionist chatbot that analyzes food suitability for health conditions using biomarker-based predictions.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Include Showdown.js to render Markdown from the server -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for a cleaner look */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #9ca3af; /* gray-400 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* gray-500 */
+        }
+        /* Animation for background blobs */
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+            animation-delay: -2s;
+        }
+        .animation-delay-4000 {
+            animation-delay: -4s;
+        }
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        /* Custom styling for the bot's detailed, rendered response */
+         .bot-response-details h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            color: #1f2937;
+        }
+        .bot-response-details p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+         .bot-response-details strong {
+            font-weight: 600;
+        }
+        /* Color-coded verdict styling */
+        .verdict-good {
+            color: #16a34a;
+            font-weight: 700;
+            background: rgba(22, 163, 74, 0.1);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+        .verdict-avoid {
+            color: #dc2626;
+            font-weight: 700;
+            background: rgba(220, 38, 38, 0.1);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-100 via-teal-100 to-blue-200 overflow-hidden">
+
+    <!-- Creative Background Elements -->
+    <div class="absolute top-0 -left-4 w-72 h-72 bg-teal-300 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-blob"></div>
+    <div class="absolute top-0 -right-4 w-72 h-72 bg-green-300 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-0 -left-20 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-blob animation-delay-4000"></div>
+    
+    <div class="relative flex h-screen items-center justify-center p-4">
+        <!-- Main Container -->
+        <div class="w-full max-w-5xl h-[90vh] bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl flex">
+            
+            <!-- Chat Area -->
+            <div class="w-2/3 flex flex-col border-r border-gray-200">
+                <!-- Header -->
+                <div class="p-4 border-b border-gray-200 flex items-center space-x-4">
+                    <div class="relative">
+                        <img class="w-12 h-12 rounded-full" src="https://placehold.co/100x100/27A590/FFFFFF?text=AI" alt="AI Avatar">
+                        <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 border-2 border-white"></span>
+                    </div>
+                    <div>
+                        <h1 id="header-title" class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-green-500">AI Nutritionist</h1>
+                        <p id="header-subtitle" class="text-sm text-gray-500">Powered by Biomarker Intelligence</p>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div id="chat-messages" class="flex-1 p-6 space-y-6 overflow-y-auto chat-messages">
+                    <!-- Dynamic chat messages will be inserted here -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="p-4 border-t border-gray-200 bg-white/60">
+                    <div class="max-w-xl mx-auto">
+                        <form id="chat-form" class="flex items-center space-x-3">
+                            <input type="text" id="chat-input" placeholder="Type your message here..." autocomplete="off" class="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 transition-shadow">
+                            <button type="submit" id="send-button" class="bg-teal-600 text-white p-3 rounded-full hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-transform hover:scale-110">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send-horizontal"><path d="m3 3 3 9-3 9 19-9Z"/><path d="M6 12h16"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creative Side Panel -->
+            <div class="w-1/3 bg-gray-50/50 rounded-r-2xl p-6 flex flex-col">
+                 <div class="text-center mb-6">
+                    <p class="text-lg font-semibold text-gray-700">Welcome! 👋</p>
+                    <p class="text-sm text-gray-500">Your personal AI health assistant.</p>
+                </div>
+                <div class="flex-1 space-y-6">
+                    <h3 class="font-bold text-gray-800 border-b pb-2">Today's Health Tip</h3>
+                    <div id="health-tip" class="bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-lg">
+                        <!-- Random health tip will be inserted here -->
+                    </div>
+
+                    <h3 class="font-bold text-gray-800 border-b pb-2">Conversation Starters</h3>
+                    <div class="space-y-2" id="starters">
+                        <!-- Random starters will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const startersContainer = document.getElementById('starters');
+        const healthTipContainer = document.getElementById('health-tip');
+        
+        // Initialize Showdown.js to convert Markdown to HTML
+        const converter = new showdown.Converter();
+
+        // --- Data for Random Content ---
+        const healthQuotes = [
+            { title: "Let food be thy medicine...", text: "and medicine be thy food. A quote by Hippocrates, emphasizing the power of nutrition." },
+            { title: "An apple a day...", text: "keeps the doctor away. This classic saying highlights the benefits of simple, healthy habits." },
+            { title: "Take care of your body.", text: "It's the only place you have to live. A powerful reminder from Jim Rohn." },
+            { title: "The first wealth is health.", text: "Ralph Waldo Emerson reminds us that health is our most valuable asset." },
+            { title: "To keep the body in good health is a duty...", text: "otherwise we shall not be able to keep our mind strong and clear. A quote from Buddha." },
+            { title: "Hydration is key!", text: "Drinking enough water can boost your metabolism and help your body function at its best. Aim for 8 glasses a day." },
+            { title: "Move your body.", text: "Even a 30-minute walk each day can significantly improve your cardiovascular health." },
+            { title: "Sleep is a superpower.", text: "Quality sleep is crucial for mental clarity, immune function, and overall well-being." },
+            { title: "Eat the rainbow.", text: "Eating a variety of colorful fruits and vegetables ensures you get a wide range of essential vitamins and minerals." },
+            { title: "Mindful eating matters.", text: "Pay attention to your food and how you feel. It can help with digestion and prevent overeating." }
+        ];
+
+        // Conversation starters covering all supported diseases
+        const conversationStarters = [
+            "I am diabetic, can I eat Poori?",
+            "Is Dhokla safe with hypertension?",
+            "Can I eat Bhatura if I have high cholesterol?",
+            "Is Idli good if I'm overweight?",
+            "Can someone with kidney disease eat Pizza?",
+            "I have PCOD, is Rasgulla okay?",
+            "How does Pancake affect diabetes?",
+            "Is Chapati good for high blood pressure?",
+            "Can I eat Kulfi with diabetes?",
+            "Is Poha suitable for weight loss?",
+            "What about Sambar for hypertension?",
+            "Can I have Uttapam with cholesterol issues?",
+        ];
+
+        // --- Functions to dynamically create and add message bubbles ---
+
+        const renderUserMessage = (message) => {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('flex', 'justify-end');
+            messageEl.innerHTML = `<div class="bg-teal-600 text-white p-4 rounded-xl rounded-br-none max-w-lg shadow-md"><p class="text-base">${message}</p></div>`;
+            chatMessages.appendChild(messageEl);
+        };
+
+        const renderBotMessage = (htmlContent) => {
+            // Color-code verdicts before rendering
+            let coloredContent = htmlContent;
+            coloredContent = coloredContent.replace(/GOOD TO EAT/g, '<span class="verdict-good">GOOD TO EAT ✅</span>');
+            coloredContent = coloredContent.replace(/AVOID/g, '<span class="verdict-avoid">AVOID ❌</span>');
+
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('flex', 'justify-start', 'space-x-3');
+            messageEl.innerHTML = `
+                <img class="w-10 h-10 rounded-full self-end" src="https://placehold.co/100x100/27A590/FFFFFF?text=AI" alt="AI Avatar">
+                <div class="bg-gray-100 text-gray-800 p-4 rounded-xl rounded-bl-none max-w-2xl shadow-md bot-response-details">
+                    ${coloredContent}
+                </div>`;
+            chatMessages.appendChild(messageEl);
+        };
+
+        const showTypingIndicator = () => {
+            const typingEl = document.createElement('div');
+            typingEl.classList.add('flex', 'justify-start', 'space-x-3', 'typing-indicator');
+            typingEl.innerHTML = `
+                <img class="w-10 h-10 rounded-full self-end" src="https://placehold.co/100x100/27A590/FFFFFF?text=AI" alt="AI Avatar">
+                <div class="bg-gray-100 text-gray-800 p-4 rounded-xl rounded-bl-none max-w-2xl shadow-md">
+                    <div class="flex items-center space-x-1">
+                        <span class="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s;"></span>
+                        <span class="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s;"></span>
+                        <span class="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s;"></span>
+                    </div>
+                </div>`;
+            chatMessages.appendChild(typingEl);
+            scrollToBottom();
+        };
+        
+        const hideTypingIndicator = () => {
+            const typingIndicator = chatMessages.querySelector('.typing-indicator');
+            if (typingIndicator) typingIndicator.remove();
+        };
+
+        const scrollToBottom = () => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        };
+        
+        // --- Main Logic to handle conversation with the backend ---
+
+        const handleSendMessage = async (message) => {
+            if (!message) return;
+            renderUserMessage(message);
+            chatInput.value = '';
+            scrollToBottom();
+            showTypingIndicator();
+            try {
+                const response = await fetch('http://127.0.0.1:5000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                hideTypingIndicator();
+                const htmlResponse = converter.makeHtml(data.response);
+                renderBotMessage(htmlResponse);
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                renderBotMessage('Sorry, I seem to be having trouble connecting to my brain. Please make sure the Python server is running and try again.');
+            } finally {
+                scrollToBottom();
+            }
+        };
+
+        // --- Event Listeners and Initial Setup ---
+        
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            handleSendMessage(message);
+        });
+
+        startersContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const message = e.target.textContent.trim().replace(/"/g, '');
+                handleSendMessage(message);
+            }
+        });
+
+        // Function to populate random content on page load
+        const setupSidePanel = () => {
+            // Shuffle and pick 3 random starters
+            const shuffledStarters = [...conversationStarters].sort(() => 0.5 - Math.random());
+            const selectedStarters = shuffledStarters.slice(0, 3);
+            
+            startersContainer.innerHTML = ''; // Clear existing starters
+            selectedStarters.forEach(text => {
+                const button = document.createElement('button');
+                button.className = "text-left w-full text-sm text-gray-600 hover:text-teal-700 p-2 rounded-lg hover:bg-gray-200/70 transition-colors";
+                button.textContent = `"${text}"`;
+                startersContainer.appendChild(button);
+            });
+
+            // Pick a random health quote
+            const randomQuote = healthQuotes[Math.floor(Math.random() * healthQuotes.length)];
+            healthTipContainer.innerHTML = `
+                <p class="font-semibold text-teal-800">${randomQuote.title}</p>
+                <p class="text-sm text-teal-700 mt-1">${randomQuote.text}</p>
+            `;
+        };
+
+        window.addEventListener('load', () => {
+            setupSidePanel();
+             setTimeout(() => {
+                renderBotMessage("Hello! I'm your personal AI Nutritionist, powered by <strong>Biomarker Intelligence</strong>. Ask me if a certain food is right for your health condition — I support <strong>diabetes, hypertension, cholesterol, thyroid, obesity, kidney disease, and PCOD</strong>!");
+                scrollToBottom();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
